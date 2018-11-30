@@ -214,6 +214,21 @@ PENS
 "HIGH" 1.0 0 -2064490 true "" "plot count turtles with [pool = 3]"
 "LOW" 1.0 0 -10899396 true "" "plot count turtles with [pool = 1]"
 
+SLIDER
+4
+168
+176
+201
+swap_every
+swap_every
+0
+50
+20.0
+10
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## WHAT IS IT?
 
