@@ -4,7 +4,7 @@
 
 The complex system was setup using NetLogo. The system contains a minimum of 50 agents that start at any random pool. The pools are represented by the color of the patches in Netlogo. Pink patches represent the high pool wherein agents in this pool have a 25% chance to earn up to 80$ split among all the agents found in that pool and have 75% chance to earn nothing per round. Blue patches represent the stable pool wherein agents always earn 1$ each per round. Lastly, the green patches represent the low pool wherein agents in this pool have a 50% chance to earn 40$ evenly split among all the agents in that pool and a 50% chance to earn nothing per round. 
 
-<img src="images\Setup.png">
+![alt text](images/Setup.png)
 
 ### Strategy
 
