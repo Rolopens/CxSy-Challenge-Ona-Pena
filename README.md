@@ -4,7 +4,7 @@
 
 The complex system was setup using NetLogo. The system contains a minimum of 50 agents that start at any random pool. The pools are represented by the color of the patches in Netlogo. Pink patches represent the high pool wherein agents in this pool have a 25% chance to earn up to 80$ split among all the agents found in that pool and have 75% chance to earn nothing per round. Blue patches represent the stable pool wherein agents always earn 1$ each per round. Lastly, the green patches represent the low pool wherein agents in this pool have a 50% chance to earn 40$ evenly split among all the agents in that pool and a 50% chance to earn nothing per round. 
 
-![alt text](images/Setup.png)
+![setup](https://user-images.githubusercontent.com/25882838/49306357-eed2b880-f50c-11e8-801a-3f8ad067dba1.PNG)
 
 ### Strategy
 
@@ -13,3 +13,9 @@ The strategy  implemented was a basic strategy of determining whether agents pla
 ### Analysis
 
 Upon running the model, there are several things worthy to take note off. Regardless of the number of random agents and switch interval that the model uses, tau seems to play a major role in determining what pool each agent will be in at the end of the simulation. One noteworthy behavior that we were able to observe from the agents was that, when the tau was less or equal to 0.5, the agents would most likely end up in either the high or low pools, but, when the tau was above 0.5, the agents would most likely be in the stable pool at the end of simulation. This shows that the agents choose to do the less risky moves by not moving into other pools when there is a high tau (cost) and staying at the stable pool to constantly earn money. When there is a low tau, the agents then go for that chance to get more money by either staying in the high or low pool. 
+
+![high](https://user-images.githubusercontent.com/25882838/49306602-ac5dab80-f50d-11e8-9892-25093edc3af7.PNG)
+
+![low](https://user-images.githubusercontent.com/25882838/49306605-aec00580-f50d-11e8-817b-5245f842931b.PNG)
+
+![stable](https://user-images.githubusercontent.com/25882838/49306611-b089c900-f50d-11e8-9fc4-2ca4576e61df.PNG)
