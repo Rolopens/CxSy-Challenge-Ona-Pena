@@ -16,7 +16,7 @@ globals [
 to setup
   clear-all
   reset-ticks
-  create-turtles 50
+  create-turtles agents
   ask turtles
   [
     set size 1
@@ -25,12 +25,15 @@ to setup
 
     ;; randomize initial pool
     let initial initialpool?
+    ;; high
     if initial = 0 [
       setxy random (-8 - -20) + -20 random (20 - -20) + -20
     ]
+    ;; stable
     if initial = 1 [
       setxy random (7 - -7) + -7 random (20 - -20) + -20
     ]
+    ;; low
     if initial = 2 [
       setxy random (20 - 8) + 8 random (20 - -20) + -20
     ]
@@ -44,7 +47,37 @@ end
 
 ;strategy
 to go
+  if ticks >= max-ticks [stop]
   ask turtles [
+    ;; switch investing pool at certain intervals
+    if ticks > 0 and ticks mod switch-interval = 0 [
+
+      ;; strategy: move to highest pool only if remaining cash after paying (cash-tau) is lower than average
+      ;; also, you can't move if you can't afford to pay the tau
+      let low-pool-average ((sum [cash] of turtles with [pool = 1]) / global-low)
+      let stable-pool-average ((sum [cash] of turtles with [pool = 2]) / global-stable)
+      let high-pool-average ((sum [cash] of turtles with [pool = 3]) / global-high)
+
+      ;; if low-pool has highest average, move there
+      if low-pool-average = max (list low-pool-average stable-pool-average high-pool-average)
+      and (cash - tau) < low-pool-average and (cash - tau) >= 0 [
+        setxy random (20 - 8) + 8 random (20 - -20) + -20
+        set cash (cash - tau)
+      ]
+      ;; if stable-pool has highest average, move there
+      if stable-pool-average = max (list low-pool-average stable-pool-average high-pool-average)
+      and (cash - tau) < stable-pool-average and (cash - tau) >= 0 [
+        setxy random (7 - -7) + -7 random (20 - -20) + -20
+        set cash (cash - tau)
+      ]
+      ;; if high-pool has highest average, move there
+      if high-pool-average = max (list low-pool-average stable-pool-average high-pool-average)
+      and (cash - tau) < high-pool-average and (cash - tau) >= 0 [
+        setxy random (-8 - -20) + -20 random (20 - -20) + -20
+        set cash (cash - tau)
+      ]
+    ]
+
     ;; if agent is in low-pool, has 50% chance to earn 0$, 50% chance to earn 40$/# of low pool agents
     if pool = 1 [
       ifelse low-pool? [
@@ -122,8 +155,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-0
-0
+1
+1
 1
 -20
 20
@@ -136,10 +169,10 @@ ticks
 30.0
 
 BUTTON
-73
-10
-139
-43
+8
+16
+74
+49
 setup
 setup
 NIL
@@ -153,10 +186,10 @@ NIL
 1
 
 BUTTON
-143
-10
-206
-43
+91
+21
+154
+54
 go
 go
 T
@@ -170,64 +203,84 @@ NIL
 1
 
 SLIDER
-4
-129
-176
-162
-tau
-tau
-1
+10
+72
+182
+105
+agents
+agents
 50
-7.0
+100
+50.0
 1
 1
 NIL
 HORIZONTAL
 
-TEXTBOX
-6
-96
-156
-124
-tau = cost for the agent to switch investing pool
-11
-0.0
+SLIDER
+10
+116
+182
+149
+max-ticks
+max-ticks
+100
+1000
+100.0
 1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+160
+182
+193
+switch-interval
+switch-interval
+10
+100
+10.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+210
+182
+243
+tau
+tau
+1
+100
+24.0
+1
+1
+NIL
+HORIZONTAL
 
 PLOT
-8
-402
-208
-552
-Pool Distribution
+7
+400
+207
+550
+AGENTS PER POOL
 ticks
 agents
 0.0
-50.0
+10.0
 0.0
-50.0
+10.0
 true
 true
 "" ""
 PENS
 "STABLE" 1.0 0 -13345367 true "" "plot count turtles with [pool = 2]"
-"HIGH" 1.0 0 -2064490 true "" "plot count turtles with [pool = 3]"
 "LOW" 1.0 0 -10899396 true "" "plot count turtles with [pool = 1]"
-
-SLIDER
-4
-168
-176
-201
-swap_every
-swap_every
-0
-50
-20.0
-10
-1
-NIL
-HORIZONTAL
+"HIGH" 1.0 0 -2064490 true "" "plot count turtles with [pool = 3]"
 
 @#$#@#$#@
 ## WHAT IS IT?
