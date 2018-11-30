@@ -1,5 +1,6 @@
 turtles-own [
   cash ;; how much each agent owns
+  is-random ;; does the agent behave randomly
 ]
 
 patches-own[
@@ -22,6 +23,7 @@ to setup
     set size 1
     set color red
     set cash 0
+    set is-random generate-random?
 
     ;; randomize initial pool
     let initial initialpool?
@@ -45,10 +47,14 @@ to setup
   set global-high count turtles with [pool = 3]
 end
 
+
 ;strategy
 to go
   if ticks >= max-ticks [stop]
   ask turtles [
+    ifelse is-random [
+      setxy random (20 - -20) + -20 random (20 - -20) + -20
+    ] [
     ;; switch investing pool at certain intervals
     if ticks > 0 and ticks mod switch-interval = 0 [
 
@@ -77,6 +83,7 @@ to go
         set cash (cash - tau)
       ]
     ]
+    ]
 
     ;; if agent is in low-pool, has 50% chance to earn 0$, 50% chance to earn 40$/# of low pool agents
     if pool = 1 [
@@ -101,6 +108,7 @@ to go
       ]
     ]
 
+
     set label int cash
   ]
   tick
@@ -114,6 +122,11 @@ end
 ;; true = 25%
 to-report high-pool?
   report random 100 < 25
+end
+
+;; rand-agents% chance that an agent will behave randomly
+to-report generate-random?
+  report random 100 < rand-agents
 end
 
 ;; chances for low pool are 50-50
@@ -169,10 +182,10 @@ ticks
 30.0
 
 BUTTON
-8
-16
-74
-49
+4
+10
+70
+43
 setup
 setup
 NIL
@@ -186,10 +199,10 @@ NIL
 1
 
 BUTTON
-91
-21
-154
-54
+72
+10
+135
+43
 go
 go
 T
@@ -203,40 +216,40 @@ NIL
 1
 
 SLIDER
-10
-72
-182
-105
+4
+47
+176
+80
 agents
 agents
 50
 100
-50.0
+74.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-10
-116
-182
-149
+4
+85
+176
+118
 max-ticks
 max-ticks
 100
 1000
-100.0
+306.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-10
-160
-182
-193
+4
+122
+176
+155
 switch-interval
 switch-interval
 10
@@ -248,16 +261,16 @@ NIL
 HORIZONTAL
 
 SLIDER
-10
-210
-182
-243
+4
+160
+176
+193
 tau
 tau
+0
 1
-100
-24.0
-1
+0.12
+.01
 1
 NIL
 HORIZONTAL
@@ -281,6 +294,31 @@ PENS
 "STABLE" 1.0 0 -13345367 true "" "plot count turtles with [pool = 2]"
 "LOW" 1.0 0 -10899396 true "" "plot count turtles with [pool = 1]"
 "HIGH" 1.0 0 -2064490 true "" "plot count turtles with [pool = 3]"
+
+SLIDER
+4
+200
+176
+233
+rand-agents
+rand-agents
+0
+100
+65.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+9
+253
+159
+393
+switch-interval: interval at which agents decide to switch\n\ntau: payment for switching pools\n\nrand-agents: % probability that generated agent will behave randomly
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
