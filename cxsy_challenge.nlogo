@@ -1,6 +1,15 @@
-;turtles-own [food-eaten]
+turtles-own [
+  cash ;; how much each agent owns
+]
+
 patches-own[
   pool ;; if the current patch is low, stable, high (1, 2, 3) ~ pools
+]
+
+globals [
+  global-low
+  global-stable
+  global-high
 ]
 
 ;; defining a function
@@ -12,22 +21,77 @@ to setup
   [
     set size 1
     set color red
+    set cash 0
+
+    ;; randomize initial pool
+    let initial initialpool?
+    if initial = 0 [
+      setxy random (-8 - -20) + -20 random (20 - -20) + -20
+    ]
+    if initial = 1 [
+      setxy random (7 - -7) + -7 random (20 - -20) + -20
+    ]
+    if initial = 2 [
+      setxy random (20 - 8) + 8 random (20 - -20) + -20
+    ]
   ]
   create-pools
+
+  set global-low count turtles with [pool = 1]
+  set global-stable count turtles with [pool = 2]
+  set global-high count turtles with [pool = 3]
 end
 
 ;strategy
 to go
   ask turtles [
-    forward 1
+    ;; if agent is in low-pool, has 50% chance to earn 0$, 50% chance to earn 40$/# of low pool agents
+    if pool = 1 [
+      ifelse low-pool? [
+        set cash (cash + (40 / global-low))
+      ][
+        ;; earns nothing
+      ]
+    ]
+
+    ;; if agent is in stable pool, earns 1$ per time step
+    if pool = 2 [
+      set cash (cash + 1)
+    ]
+
+    ;; if agent is in high-pool, has 75% chance to earn 0$, 25% chance to earn 80$/# of high-pool agents
+    if pool = 3 [
+      ifelse high-pool? [
+        set cash (cash + (80 / global-high))
+      ][
+        ;; earns nothing
+      ]
+    ]
+
+    set label int cash
   ]
   tick
+end
+
+to-report initialpool?
+  report random 3
+end
+
+;; chances for high pool are 75-25
+;; true = 25%
+to-report high-pool?
+  report random 100 < 25
+end
+
+;; chances for low pool are 50-50
+to-report low-pool?
+  report random 2 = 0
 end
 
 to create-pools
   ; high pool
   ask patches with [pxcor >= -20 and pxcor <= -8 and pycor >= -20 and pycor <= 20] [
-    set pcolor white
+    set pcolor pink
     set pool 3
   ]
 
@@ -58,8 +122,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -20
 20
@@ -104,6 +168,51 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+4
+129
+176
+162
+tau
+tau
+1
+50
+7.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+6
+96
+156
+124
+tau = cost for the agent to switch investing pool
+11
+0.0
+1
+
+PLOT
+8
+402
+208
+552
+Pool Distribution
+ticks
+agents
+0.0
+50.0
+0.0
+50.0
+true
+true
+"" ""
+PENS
+"STABLE" 1.0 0 -13345367 true "" "plot count turtles with [pool = 2]"
+"HIGH" 1.0 0 -2064490 true "" "plot count turtles with [pool = 3]"
+"LOW" 1.0 0 -10899396 true "" "plot count turtles with [pool = 1]"
 
 @#$#@#$#@
 ## WHAT IS IT?
