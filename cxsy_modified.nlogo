@@ -1,6 +1,9 @@
 turtles-own [
   cash ;; how much each agent owns
   is-random ;; does the agent behave randomly
+  is-greedy
+  is-trendy
+  is-stable-random
 ]
 
 patches-own[
@@ -11,6 +14,10 @@ globals [
   global-low
   global-stable
   global-high
+  popular
+  history-low
+  history-stable
+  history-high
 ]
 
 ;; defining a function
@@ -18,12 +25,28 @@ to setup
   clear-all
   reset-ticks
   create-turtles agents
+  let cur 1
+  ;; variables to be used to determine type of agent
+  let will-be-greedy floor (agents * modified-greedy)
+  let will-be-trendy floor ((agents * trend) + will-be-greedy)
+  let will-be-semi-random floor ((agents * semi-random) + will-be-trendy)
+  let will-be-random floor ((agents * (1 - (modified-greedy + trend + semi-random))) + will-be-semi-random)
+
+  ;; initialize values
+  set popular -1
+  set history-low []
+  set history-stable []
+  set history-high []
+
+  show word "GREEDY: " will-be-greedy
+  show word "TRENDY: " will-be-trendy
+  show word "SEMI-RANDOM: " will-be-semi-random
+  show word "RANDOM: " will-be-random
   ask turtles
   [
     set size 1
     set color red
     set cash 0
-    set is-random generate-random?
 
     ;; randomize initial pool
     let initial initialpool?
@@ -39,7 +62,26 @@ to setup
     if initial = 2 [
       setxy random (20 - 8) + 8 random (20 - -20) + -20
     ]
+
+    set is-greedy false
+    set is-trendy false
+    set is-stable-random false
+    set is-random false
+    if cur <= will-be-greedy [
+      set is-greedy true
+    ]
+    if cur > will-be-greedy and cur <= will-be-trendy[
+      set is-trendy true
+    ]
+    if cur > will-be-trendy and cur <= will-be-semi-random[
+      set is-stable-random true
+    ]
+    if cur > will-be-semi-random and cur <= will-be-random[
+      set is-random true
+    ]
+    set cur (cur + 1)
   ]
+
   create-pools
 
   set global-low count turtles with [pool = 1]
@@ -51,43 +93,128 @@ end
 ;strategy
 to go
   if ticks >= max-ticks [stop]
+
+  if ticks > 0 [
+    ;; update history of averages every time step
+    let low-pool-average ((sum [cash] of turtles with [pool = 1]) / global-low)
+    let stable-pool-average ((sum [cash] of turtles with [pool = 2]) / global-stable)
+    let high-pool-average ((sum [cash] of turtles with [pool = 3]) / global-high)
+
+    ;; add latest averages to their respective arrays
+    set history-low lput low-pool-average history-low
+    set history-stable lput stable-pool-average history-stable
+    set history-high lput high-pool-average history-high
+  ]
+
   ask turtles [
-    ifelse is-random [
-      setxy random (20 - -20) + -20 random (20 - -20) + -20
-    ] [
     ;; switch investing pool at certain intervals
     if ticks > 0 and ticks mod switch-interval = 0 [
+      ;; strategy for modified greedy: go to pool with highest average payoff from the last (memory) timesteps
+      if is-greedy and length history-low >= memory and length history-stable >= memory and length history-high >= memory[
+        let cur -1
+        let curLow 0
+        let curStable 0
+        let curHigh 0
+        foreach history-low [
+          val -> set cur cur + 1
+          if cur >= (length history-low) - memory [
+            set curLow curLow + val
+          ]
+        ]
+        set curLow curLow / memory
 
-      ;; strategy: move to highest pool only if remaining cash after paying (cash-tau) is lower than average
-      ;; also, you can't move if you can't afford to pay the tau
-      let low-pool-average ((sum [cash] of turtles with [pool = 1]) / global-low)
-      let stable-pool-average ((sum [cash] of turtles with [pool = 2]) / global-stable)
-      let high-pool-average ((sum [cash] of turtles with [pool = 3]) / global-high)
+        set cur -1
+        foreach history-stable [
+          val -> set cur cur + 1
+          if cur >= (length history-stable) - memory [
+            set curStable curStable + val
+          ]
+        ]
+        set curStable curStable / memory
 
-      ;; if low-pool has highest average, move there
-      if low-pool-average = max (list low-pool-average stable-pool-average high-pool-average)
-      and (cash - tau) < low-pool-average and (cash - tau) >= 0 [
-        setxy random (20 - 8) + 8 random (20 - -20) + -20
-        set cash (cash - tau)
+        set cur -1
+        foreach history-high [
+          val -> set cur cur + 1
+          if cur >= (length history-high) - memory [
+            set curHigh curHigh + val
+          ]
+        ]
+        set curHigh curHigh / memory
+
+        ;; if low-pool has highest average from the last (memory) moves, move there
+        if curLow = max (list curLow curStable curHigh)
+        and (cash - tau) >= 0 [
+          setxy random (20 - 8) + 8 random (20 - -20) + -20
+          set cash (cash - tau)
+        ]
+        ;; if stable-pool has highest average from the last (memory) moves, move there
+        if curStable = max (list curLow curStable curHigh)
+        and (cash - tau) >= 0 [
+          setxy random (7 - -7) + -7 random (20 - -20) + -20
+          set cash (cash - tau)
+        ]
+        ;; if high-pool has highest average from the last (memory) moves, move there
+        if curHigh = max (list curLow curStable curHigh)
+        and (cash - tau) >= 0 [
+          setxy random (-8 - -20) + -20 random (20 - -20) + -20
+          set cash (cash - tau)
+        ]
       ]
-      ;; if stable-pool has highest average, move there
-      if stable-pool-average = max (list low-pool-average stable-pool-average high-pool-average)
-      and (cash - tau) < stable-pool-average and (cash - tau) >= 0 [
-        setxy random (7 - -7) + -7 random (20 - -20) + -20
-        set cash (cash - tau)
+
+      ;; strategy for trendy: go to most recent popular choice
+      if is-trendy and popular != -1[
+        if popular = 1 and cash >= tau[
+          setxy random (20 - 8) + 8 random (20 - -20) + -20
+          set cash (cash - tau)
+        ]
+
+        if popular = 2 and cash >= tau[
+          setxy random (7 - -7) + -7 random (20 - -20) + -20
+          set cash (cash - tau)
+        ]
+
+        if popular = 3 and cash >= tau[
+          setxy random (-8 - -20) + -20 random (20 - -20) + -20
+          set cash (cash - tau)
+        ]
       ]
-      ;; if high-pool has highest average, move there
-      if high-pool-average = max (list low-pool-average stable-pool-average high-pool-average)
-      and (cash - tau) < high-pool-average and (cash - tau) >= 0 [
-        setxy random (-8 - -20) + -20 random (20 - -20) + -20
-        set cash (cash - tau)
+
+      ;; strategy for stable-random: go to random and then back to stable every (random-variable) time steps
+      if is-stable-random[
+        ifelse ticks mod random-variable = 0 [
+          setxy random (7 - -7) + -7 random (20 - -20) + -20
+          set cash (cash - tau)
+        ] [
+          setxy random (20 - -20) + -20 random (20 - -20) + -20
+        ]
+      ]
+
+      ;; leftover agents will behave randomly
+      if is-random[
+        setxy random (20 - -20) + -20 random (20 - -20) + -20
       ]
     ]
-    ]
 
+    ;; update global count every time step after everyone has moved
     set global-low count turtles with [pool = 1]
     set global-stable count turtles with [pool = 2]
     set global-high count turtles with [pool = 3]
+
+    ;; update popular choice
+    if global-low = max (list global-low global-stable global-high) [
+      set popular 1
+    ]
+    if global-stable = max (list global-low global-stable global-high) [
+      set popular 2
+    ]
+    if global-high = max (list global-low global-stable global-high) [
+      set popular 3
+    ]
+
+    ;; checking for global counts
+    if global-low = 0 [set global-low 1]
+    if global-stable = 0 [set global-stable 1]
+    if global-high = 0 [set global-high 1]
 
     ;; if agent is in low-pool, has 50% chance to earn 0$, 50% chance to earn 40$/# of low pool agents
     if pool = 1 [
@@ -125,11 +252,6 @@ end
 ;; true = 25%
 to-report high-pool?
   report random 100 < 25
-end
-
-;; rand-agents% chance that an agent will behave randomly
-to-report generate-random?
-  report random 100 < rand-agents
 end
 
 ;; chances for low pool are 50-50
@@ -242,7 +364,7 @@ max-ticks
 max-ticks
 100
 1000
-306.0
+1000.0
 1
 1
 NIL
@@ -257,7 +379,7 @@ switch-interval
 switch-interval
 10
 100
-10.0
+40.0
 10
 1
 NIL
@@ -298,30 +420,100 @@ PENS
 "LOW" 1.0 0 -10899396 true "" "plot count turtles with [pool = 1]"
 "HIGH" 1.0 0 -2064490 true "" "plot count turtles with [pool = 3]"
 
+TEXTBOX
+7
+312
+157
+452
+switch-interval: interval at which agents decide to switch\n\ntau: payment for switching pools
+11
+0.0
+1
+
 SLIDER
-4
-200
-176
-233
-rand-agents
-rand-agents
+756
+58
+928
+91
+modified-greedy
+modified-greedy
+0
+.33
+0.33
+.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+756
+130
+928
+163
+trend
+trend
+0
+.33
+0.33
+.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+757
+166
+929
+199
+semi-random
+semi-random
+0
+.33
+0.0
+.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+785
+202
+1006
+235
+random-variable
+random-variable
 0
 100
-65.0
+12.0
 1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-9
-253
-159
-393
-switch-interval: interval at which agents decide to switch\n\ntau: payment for switching pools\n\nrand-agents: % probability that generated agent will behave randomly
+758
+11
+908
+53
+choose percentage of agents that will follow a certain strategy
 11
 0.0
 1
+
+SLIDER
+780
+94
+952
+127
+memory
+memory
+0
+10
+4.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
