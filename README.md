@@ -21,6 +21,7 @@ The study is limited to only evaluating the 3 aforementioned strategies with a c
 
 ### Results & Analysis
 ![assumptions](https://user-images.githubusercontent.com/25882838/52959244-b2f31500-33d0-11e9-9dba-1d34a995bc35.PNG)
+
 The first configuration tested was seeing how much the semi-random agents affected the simulations. This was done by changing the value of the random value of the Semi-random agents. By changing this, we change when they go back to the stable pool. So in this first configuration, we tested if the value of the random-variable would affect the outcome if the value was less than 50 time steps. 
 ![config1](https://user-images.githubusercontent.com/25882838/52959270-c69e7b80-33d0-11e9-9e85-f2d882f11372.PNG)
 Figure 2. Testing the for values less 50 for *random-variable*
