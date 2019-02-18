@@ -349,7 +349,7 @@ agents
 agents
 50
 100
-74.0
+100.0
 1
 1
 NIL
@@ -364,7 +364,7 @@ max-ticks
 max-ticks
 100
 1000
-1000.0
+100.0
 1
 1
 NIL
@@ -379,7 +379,7 @@ switch-interval
 switch-interval
 10
 100
-40.0
+10.0
 10
 1
 NIL
@@ -394,7 +394,7 @@ tau
 tau
 0
 1
-0.12
+1.0
 .01
 1
 NIL
@@ -439,7 +439,7 @@ modified-greedy
 modified-greedy
 0
 .33
-0.33
+0.0
 .01
 1
 NIL
@@ -469,7 +469,7 @@ semi-random
 semi-random
 0
 .33
-0.0
+0.33
 .01
 1
 NIL
@@ -482,9 +482,9 @@ SLIDER
 235
 random-variable
 random-variable
-0
+1
 100
-12.0
+100.0
 1
 1
 NIL
@@ -509,7 +509,7 @@ memory
 memory
 1
 10
-4.0
+1.0
 1
 1
 NIL
